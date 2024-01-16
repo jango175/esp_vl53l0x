@@ -101,8 +101,11 @@ void vl53l0x_init(vl53l0x_conf_t vl53l0x_conf)
     vl53l0x_dev.i2c_freq = freq;
     portEXIT_CRITICAL(&spinlock);
 
-    vl53l0x_software_reset();
-
+    if (vl53l0x_conf.xshut_pin != -1)
+        vl53l0x_hardware_reset(vl53l0x_conf);
+    else
+        vl53l0x_software_reset();
+    
     // device init
     VL53L0X_Error status = VL53L0X_DataInit(&vl53l0x_dev);
     if (status != VL53L0X_ERROR_NONE)
