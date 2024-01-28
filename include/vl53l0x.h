@@ -1,3 +1,11 @@
+/**
+ * @file vl53l0x.h
+ * @author JanG175
+ * @brief ESP-IDF component for VL53L0X ToF distance sensor
+ * 
+ * @copyright Apache 2.0
+*/
+
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
