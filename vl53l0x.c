@@ -89,6 +89,7 @@ void vl53l0x_init(vl53l0x_conf_t vl53l0x_conf)
     else
         ESP_LOGW(TAG, "I2C frequency is too high, using max frequency instead");
 
+#ifdef VL53L0X_I2C_INIT
     // init i2c connection
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
@@ -101,6 +102,7 @@ void vl53l0x_init(vl53l0x_conf_t vl53l0x_conf)
     };
     ESP_ERROR_CHECK(i2c_param_config(vl53l0x_conf.i2c_port, &conf));
     ESP_ERROR_CHECK(i2c_driver_install(vl53l0x_conf.i2c_port, conf.mode, 0, 0, 0));
+#endif
 
     // api init
     portENTER_CRITICAL(&spinlock);

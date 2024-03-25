@@ -18,6 +18,8 @@
 #include "vl53l0x_def.h"
 #include "vl53l0x_platform.h"
 
+// #define VL53L0X_I2C_INIT        1 // uncomment to initialize I2C driver
+
 #define VL53L0X_MAX_I2C_FREQ    400000
 #define VL53L0X_I2C_ADDR        0x29
 
