@@ -43,13 +43,21 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "freertos/task.h"
 #include "esp_log.h"
 
+#ifdef VL53L0X_USE_OLD_I2C_DRIVER
 #define I2C_TIMEOUT_MS (100 / portTICK_PERIOD_MS)
 #define I2C_ACK        1
 #define I2C_NACK       0
+#else
+#define I2C_TIMEOUT_MS 100
+
+i2c_master_bus_handle_t bus_handle;
+i2c_master_dev_handle_t dev_handle;
+#endif
 
 #define LOG_FUNCTION_START(fmt, ... )           _LOG_FUNCTION_START(TRACE_MODULE_PLATFORM, fmt, ##__VA_ARGS__)
 #define LOG_FUNCTION_END(status, ... )          _LOG_FUNCTION_END(TRACE_MODULE_PLATFORM, status, ##__VA_ARGS__)
 #define LOG_FUNCTION_END_FMT(status, fmt, ... ) _LOG_FUNCTION_END_FMT(TRACE_MODULE_PLATFORM, status, fmt, ##__VA_ARGS__)
+
 
 /**
  * @def I2C_BUFFER_CONFIG
@@ -145,6 +153,8 @@ VL53L0X_Error VL53L0X_WriteMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata,
     deviceAddress = Dev->i2c_address;
 
     // status_int = VL53L0X_write_multi(deviceAddress, index, pdata, count);
+
+#ifdef VL53L0X_USE_OLD_I2C_DRIVER
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, deviceAddress << 1 | I2C_MASTER_WRITE, I2C_ACK);
@@ -154,6 +164,13 @@ VL53L0X_Error VL53L0X_WriteMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata,
     i2c_master_stop(cmd);
     esp_err_t esp_err = i2c_master_cmd_begin(Dev->i2c_port, cmd, I2C_TIMEOUT_MS);
     i2c_cmd_link_delete(cmd);
+#else
+    uint8_t data_wr[count + 1];
+    data_wr[0] = index; // first byte is the register address
+    for (uint32_t i = 0; i < count; i++)
+        data_wr[i + 1] = pdata[i];
+    esp_err_t esp_err = i2c_master_transmit(dev_handle, data_wr, count + 1, I2C_TIMEOUT_MS);
+#endif
 
     status_int = esp_to_vl53l0x_error(esp_err);
 
@@ -178,6 +195,8 @@ VL53L0X_Error VL53L0X_ReadMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata, 
     deviceAddress = Dev->i2c_address;
 
     // status_int = VL53L0X_read_multi(deviceAddress, index, pdata, count);
+
+#ifdef VL53L0X_USE_OLD_I2C_DRIVER
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, deviceAddress << 1 | I2C_MASTER_WRITE, I2C_ACK);
@@ -189,6 +208,9 @@ VL53L0X_Error VL53L0X_ReadMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata, 
     i2c_master_stop(cmd);
     esp_err_t esp_err = i2c_master_cmd_begin(Dev->i2c_port, cmd, I2C_TIMEOUT_MS);
     i2c_cmd_link_delete(cmd);
+#else
+    esp_err_t esp_err = i2c_master_transmit_receive(dev_handle, &index, 1, pdata, count, I2C_TIMEOUT_MS);
+#endif
 
     status_int = esp_to_vl53l0x_error(esp_err);
 

@@ -11,12 +11,17 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "driver/gpio.h"
-#include "driver/i2c.h"
 #include "esp_log.h"
 
 #include "vl53l0x_api.h"
 #include "vl53l0x_def.h"
 #include "vl53l0x_platform.h"
+
+#ifdef VL53L0X_USE_OLD_I2C_DRIVER
+#include "driver/i2c.h"
+#else
+#include "driver/i2c_master.h"
+#endif
 
 // #define VL53L0X_I2C_INIT        1 // uncomment to initialize I2C driver
 
@@ -25,7 +30,11 @@
 
 typedef struct vl53l0x_conf_t
 {
+#ifdef VL53L0X_USE_OLD_I2C_DRIVER
     i2c_port_t i2c_port;
+#else
+    i2c_port_num_t i2c_port;
+#endif
     gpio_num_t sda_pin;
     gpio_num_t scl_pin;
     uint32_t i2c_freq;

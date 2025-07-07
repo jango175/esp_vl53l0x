@@ -16,6 +16,11 @@ static const char* TAG = "vl53l0x";
 static VL53L0X_Dev_t vl53l0x_dev;
 static uint32_t vl53l0x_timing_budget_ms;
 
+#ifndef VL53L0X_USE_OLD_I2C_DRIVER
+extern i2c_master_bus_handle_t bus_handle;
+extern i2c_master_dev_handle_t dev_handle;
+#endif
+
 
 /**
  * @brief print the last error message from the API
@@ -91,6 +96,7 @@ void vl53l0x_init(vl53l0x_conf_t vl53l0x_conf)
 
 #ifdef VL53L0X_I2C_INIT
     // init i2c connection
+#ifdef VL53L0X_USE_OLD_I2C_DRIVER
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
         .sda_io_num = vl53l0x_conf.sda_pin,
@@ -102,6 +108,24 @@ void vl53l0x_init(vl53l0x_conf_t vl53l0x_conf)
     };
     ESP_ERROR_CHECK(i2c_param_config(vl53l0x_conf.i2c_port, &conf));
     ESP_ERROR_CHECK(i2c_driver_install(vl53l0x_conf.i2c_port, conf.mode, 0, 0, 0));
+#else
+    i2c_master_bus_config_t i2c_mst_config = {
+        .clk_source = I2C_CLK_SRC_DEFAULT,
+        .i2c_port = vl53l0x_conf.i2c_port,
+        .scl_io_num = vl53l0x_conf.scl_pin,
+        .sda_io_num = vl53l0x_conf.sda_pin,
+        .glitch_ignore_cnt = 7,
+        .flags.enable_internal_pullup = true
+    };
+    ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_mst_config, &bus_handle));
+
+    i2c_device_config_t dev_cfg = {
+        .dev_addr_length = I2C_ADDR_BIT_LEN_7,
+        .device_address = VL53L0X_I2C_ADDR,
+        .scl_speed_hz = freq
+    };
+    ESP_ERROR_CHECK(i2c_master_bus_add_device(bus_handle, &dev_cfg, &dev_handle));
+#endif
 #endif
 
     // api init
@@ -158,7 +182,12 @@ void vl53l0x_init(vl53l0x_conf_t vl53l0x_conf)
 */
 void vl53l0x_deinit(vl53l0x_conf_t vl53l0x_conf)
 {
+#ifdef VL53L0X_USE_OLD_I2C_DRIVER
     ESP_ERROR_CHECK(i2c_driver_delete(vl53l0x_conf.i2c_port));
+#else
+    ESP_ERROR_CHECK(i2c_master_bus_rm_device(dev_handle));
+    ESP_ERROR_CHECK(i2c_del_master_bus(bus_handle));
+#endif
 }
 
 

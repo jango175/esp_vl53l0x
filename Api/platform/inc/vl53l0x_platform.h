@@ -34,7 +34,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vl53l0x_platform_log.h"
 
 /*!< user specific field */
+// #define VL53L0X_USE_OLD_I2C_DRIVER 1 // comment out to use new i2c driver
+
+#ifdef VL53L0X_USE_OLD_I2C_DRIVER
 #include "driver/i2c.h"
+#else
+#include "driver/i2c_master.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,7 +68,11 @@ typedef struct {
 
     /*!< user specific field */
     uint8_t      i2c_address;             /*!< i2c device address user specific field */
+#ifdef VL53L0X_USE_OLD_I2C_DRIVER
     i2c_port_t   i2c_port;                /*!< i2c port number: I2C_PORT0, I2C_PORT1 */
+#else
+    i2c_port_num_t i2c_port;              /*!< i2c port number: I2C_NUM_0, I2C_NUM_1 */
+#endif
     uint32_t     i2c_freq;                /*!< Comms speed [Hz] : typically 400kHz for I2C */
 
 } VL53L0X_Dev_t;
