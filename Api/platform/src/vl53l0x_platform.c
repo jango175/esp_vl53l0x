@@ -50,8 +50,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
 #define I2C_TIMEOUT_MS 100
 
-i2c_master_bus_handle_t bus_handle;
-i2c_master_dev_handle_t dev_handle;
+#ifdef VL53L0X_I2C_INIT
+i2c_master_bus_handle_t vl53l0x_bus_handle;
+#endif
+i2c_master_dev_handle_t vl53l0x_dev_handle;
 #endif
 
 #define LOG_FUNCTION_START(fmt, ... )           _LOG_FUNCTION_START(TRACE_MODULE_PLATFORM, fmt, ##__VA_ARGS__)
@@ -169,7 +171,7 @@ VL53L0X_Error VL53L0X_WriteMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata,
     data_wr[0] = index; // first byte is the register address
     for (uint32_t i = 0; i < count; i++)
         data_wr[i + 1] = pdata[i];
-    esp_err_t esp_err = i2c_master_transmit(dev_handle, data_wr, count + 1, I2C_TIMEOUT_MS);
+    esp_err_t esp_err = i2c_master_transmit(vl53l0x_dev_handle, data_wr, count + 1, I2C_TIMEOUT_MS);
 #endif
 
     status_int = esp_to_vl53l0x_error(esp_err);
@@ -209,7 +211,7 @@ VL53L0X_Error VL53L0X_ReadMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata, 
     esp_err_t esp_err = i2c_master_cmd_begin(Dev->i2c_port, cmd, I2C_TIMEOUT_MS);
     i2c_cmd_link_delete(cmd);
 #else
-    esp_err_t esp_err = i2c_master_transmit_receive(dev_handle, &index, 1, pdata, count, I2C_TIMEOUT_MS);
+    esp_err_t esp_err = i2c_master_transmit_receive(vl53l0x_dev_handle, &index, 1, pdata, count, I2C_TIMEOUT_MS);
 #endif
 
     status_int = esp_to_vl53l0x_error(esp_err);

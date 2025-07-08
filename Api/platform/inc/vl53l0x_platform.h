@@ -35,6 +35,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /*!< user specific field */
 // #define VL53L0X_USE_OLD_I2C_DRIVER 1 // comment out to use new i2c driver
+#define VL53L0X_I2C_INIT           1 // uncomment to initialize I2C driver
 
 #ifdef VL53L0X_USE_OLD_I2C_DRIVER
 #include "driver/i2c.h"
